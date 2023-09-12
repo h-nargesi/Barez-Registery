@@ -1,0 +1,16 @@
+curl 'https://pos.barez.org/reserve/customer/add' \
+  -H 'authority: pos.barez.org' \
+  -H 'accept: application/json, text/plain, */*' \
+  -H 'accept-language: en-US,en;q=0.8' \
+  -H 'content-type: application/json;charset=UTF-8' \
+  -H 'origin: https://pos.barez.org' \
+  -H 'sec-ch-ua: "Chromium";v="116", "Not)A;Brand";v="24", "Brave";v="116"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-origin' \
+  -H 'sec-gpc: 1' \
+  -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36' \
+  --data-raw '{"firstName":"حامد","lastName":"نرگسی","birthday":"1363-06-29","idNumber":"0074990802","mobile":"09125157305","email":"hamed.nargesi.jar@gmail.com","address":"No 13, Dr. Shariati"}' \
+  --compressed
