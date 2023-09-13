@@ -57,6 +57,8 @@ static async Task CheckingCenters(HttpRequests service, int period)
         var centers = await service.All();
         Log.Logger.Information("ALL-CENTERS\t{0}", centers?.Length ?? 0);
         Log.Logger.Debug("ALL-CENTERS={0}", centers?.SerializeJson());
-        Thread.Sleep(period * 1000);
+
+        int waiting_time = centers?.Length > 0 ? period / 4 : period;
+        Thread.Sleep(waiting_time * 1000);
     }
 }
