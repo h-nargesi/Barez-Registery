@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Photon.Barez;
 
-static class Extensions
+static class JsonHandler
 {
     public static string SerializeJson(this object obj)
     {
@@ -19,5 +19,11 @@ static class Extensions
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         });
+    }
+
+    public static T LoadFromFile<T>(string path) where T : struct
+    {
+        var data = File.ReadAllText(path);
+        return data.DeserializeJson<T>();
     }
 }

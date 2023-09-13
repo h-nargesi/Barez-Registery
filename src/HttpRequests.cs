@@ -94,7 +94,7 @@ class HttpRequests : IDisposable
         var result = text.DeserializeJson<Center.Result>();
         if (!result.Success) HandleError(text);
 
-        return result.Centers;
+        return result.Data;
     }
 
     public void Dispose()

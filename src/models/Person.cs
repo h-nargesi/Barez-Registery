@@ -18,12 +18,6 @@ struct Person
         return $"{IdNumber}/{Mobile}";
     }
 
-    public static Person Load()
-    {
-        var data = File.ReadAllText("person.json");
-        return data.DeserializeJson<Person>();
-    }
-
     public struct Result
     {
         public bool Success { get; set; }

@@ -17,7 +17,7 @@ struct Center
     public struct Result
     {
         public bool Success { get; set; }
-        public Center[] Centers { get; set; }
+        public Center[] Data { get; set; }
     }
 }
 
