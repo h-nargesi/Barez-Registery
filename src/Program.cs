@@ -52,13 +52,21 @@ static async Task<Person> RegisterFirstTime(HttpRequests service, string path)
 
 static async Task CheckingCenters(HttpRequests service, int period)
 {
+    var waiting_time = period;
     while (true)
     {
-        var centers = await service.All();
-        Log.Logger.Information("ALL-CENTERS\t{0}", centers?.Length ?? 0);
-        Log.Logger.Debug("ALL-CENTERS={0}", centers?.SerializeJson());
+        try
+        {
+            var centers = await service.All();
+            Log.Logger.Information("ALL-CENTERS\t{0}", centers?.Length ?? 0);
+            Log.Logger.Debug("ALL-CENTERS={0}", centers?.SerializeJson());
+            waiting_time = centers?.Length > 0 ? period / 4 : period;
+        }
+        catch (HttpRequestException ex)
+        {
+            Log.Logger.Error(ex, "Error");
+        }
 
-        int waiting_time = centers?.Length > 0 ? period / 4 : period;
         Thread.Sleep(waiting_time * 1000);
     }
 }
