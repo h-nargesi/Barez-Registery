@@ -99,10 +99,10 @@ class HttpRequests : IDisposable
 
     public void Dispose()
     {
-        service.Dispose();
+        service?.Dispose();
     }
 
-    private void HandleError(string text)
+    private static void HandleError(string text)
     {
         var error = text.DeserializeJson<ErrorResult>();
         throw new Exception(error.Error);
