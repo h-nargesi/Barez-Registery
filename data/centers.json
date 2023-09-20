@@ -1,0 +1,53 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": 11,
+      "ce_name": "سرویس سنتر همدان",
+      "startAt": "2023-09-19",
+      "endAt": "2023-09-20",
+      "hourStart": "07:00",
+      "hourEnd": "23:59",
+      "work_centers": [
+        {
+          "id": 1328,
+          "wc_date": "2023-09-20",
+          "reserved": 110
+        }
+      ],
+      "couldReserved": 110,
+      "dates": [
+        {
+          "_en": "2023-09-20",
+          "_fa": "۱۴۰۲/۰۶/۲۹",
+          "_day": "چهارشنبه"
+        }
+      ],
+      "customerReserved": 91
+    },
+    {
+      "id": 9,
+      "ce_name": "سرویس سنتر تهران",
+      "startAt": "2023-09-20",
+      "endAt": "2023-09-20",
+      "hourStart": "06:00",
+      "hourEnd": "23:59",
+      "work_centers": [
+        {
+          "id": 1329,
+          "wc_date": "2023-09-20",
+          "reserved": 50
+        }
+      ],
+      "couldReserved": 50,
+      "dates": [
+        {
+          "_en": "2023-09-20",
+          "_fa": "۱۴۰۲/۰۶/۲۹",
+          "_day": "چهارشنبه"
+        }
+      ],
+      "customerReserved": 23
+    }
+  ]
+}
