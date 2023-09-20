@@ -5,9 +5,12 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>Photon.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <AssemblyName>$(MSBuildProjectName)</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="car.json" />
     <None Remove="person.json" />
   </ItemGroup>
 
@@ -20,6 +23,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="car.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="person.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

@@ -23,7 +23,7 @@ class HttpRequests : IDisposable
         service.DefaultRequestHeaders.Add("sec-gpc", "1");
         service.DefaultRequestHeaders.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36");
 
-        service.BaseAddress = new Uri(BaseUrl + "reserve/");
+        service.BaseAddress = new Uri(BaseUrl);
     }
 
     public async Task<Check> Check(Person person)
@@ -39,7 +39,7 @@ class HttpRequests : IDisposable
             Encoding.UTF8,
             MediaTypeNames.Application.Json);
 
-        using var response = await service.PostAsync("check", content);
+        using var response = await service.PostAsync("reserve/check", content);
         var text = await response.Content.ReadAsStringAsync();
 
         var result = text.DeserializeJson<Check.Result>();
@@ -50,7 +50,7 @@ class HttpRequests : IDisposable
 
     public async Task<Person> Auth(Check check)
     {
-        using var response = await service.GetAsync($"auth?code={check.Code}&id={check.IdNumber}");
+        using var response = await service.GetAsync($"reserve/auth?code={check.Code}&id={check.IdNumber}");
         var text = await response.Content.ReadAsStringAsync();
 
         var result = text.DeserializeJson<Person.Result>();
@@ -77,7 +77,7 @@ class HttpRequests : IDisposable
             Encoding.UTF8,
             MediaTypeNames.Application.Json);
 
-        using var response = await service.PostAsync("customer/add", content);
+        using var response = await service.PostAsync("reserve/customer/add", content);
         var text = await response.Content.ReadAsStringAsync();
 
         var result = text.DeserializeJson<Person.Ack>();
@@ -86,15 +86,37 @@ class HttpRequests : IDisposable
         return result.Data;
     }
 
-    public async Task<Center[]> All()
+    public async Task<Center[]> AllCenters()
     {
-        using var response = await service.GetAsync("centers/all");
+        using var response = await service.GetAsync("reserve/centers/all");
         var text = await response.Content.ReadAsStringAsync();
 
         var result = text.DeserializeJson<Center.Result>();
         if (!result.Success) HandleError(text);
 
         return result.Data;
+    }
+
+    public async Task<Car[]> Cars()
+    {
+        using var response = await service.GetAsync("allcars");
+        var text = await response.Content.ReadAsStringAsync();
+
+        var result = text.DeserializeJson<Car.Result>();
+        if (!result.Success) HandleError(text);
+
+        return result.Data;
+    }
+
+    public async Task<string> ReserveDates(string wc_date, int workId, int carId)
+    {
+        using var response = await service.GetAsync($"reserve/dates?wc_date={wc_date}&workId={workId}&carId={carId}");
+        var text = await response.Content.ReadAsStringAsync();
+
+        var result = text.DeserializeJson<Date.Result>();
+        if (!result.Success) HandleError(text);
+
+        return text;
     }
 
     public void Dispose()
