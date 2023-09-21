@@ -125,16 +125,19 @@ static async Task Dates(HttpRequests service, Car car, Center center)
         return;
     }
 
-    var work = center.Work_centers.First();
-    var date = center.Dates.First();
+    foreach(var work in center.Work_centers)
+    {
+        foreach(var date in center.Dates.Reverse())
+        {
+            var appointement = await service.ReserveDates(date._en, work.Id, car.Id);
 
-    var appointement = await service.ReserveDates(date._en, work.Id, car.Id);
+            Log.Logger.Information("CHECK-DATES\tW:{0}\tD:{0}", appointement);
+            //Log.Logger.Debug("CHECK-DATES={0}", appointement);
 
-    Log.Logger.Information("CHECK-DATES\tW:{0}\tD:{0}", appointement);
-    //Log.Logger.Debug("CHECK-DATES={0}", appointement);
+            appointement = await service.ReserveDates(work.Wc_date, work.Id, car.Id);
 
-    appointement = await service.ReserveDates(work.Wc_date, work.Id, car.Id);
-
-    Log.Logger.Information("CHECK-DATES\tW:{0}\tD:{0}", appointement);
-    //Log.Logger.Debug("CHECK-DATES={0}", appointement);
+            Log.Logger.Information("CHECK-DATES\tW:{0}\tD:{0}", appointement);
+            //Log.Logger.Debug("CHECK-DATES={0}", appointement);
+        }
+    }
 }
