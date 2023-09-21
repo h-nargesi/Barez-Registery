@@ -125,6 +125,9 @@ static async Task Dates(HttpRequests service, Car car, Center center)
         return;
     }
 
+    var waiting_time = center.Work_centers.Length * center.Dates.Length;
+    waiting_time = waiting_time > 1 ? 1 : 0;
+
     foreach(var work in center.Work_centers)
     {
         foreach(var date in center.Dates.Reverse())
@@ -138,6 +141,8 @@ static async Task Dates(HttpRequests service, Car car, Center center)
 
             Log.Logger.Information("CHECK-DATES\tW:{0}\tD:{0}", appointement);
             //Log.Logger.Debug("CHECK-DATES={0}", appointement);
+
+            Thread.Sleep(waiting_time * 1000);
         }
     }
 }
