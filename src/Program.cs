@@ -34,6 +34,7 @@ try
             foreach (var car in cars)
             {
                 Log.Logger.Information("CHECK-CAR\t{0}\t{1}", car.Id, car.TypeId);
+                Log.Logger.Debug("CHECK-CAR\t{0}", car.Car_name);
 
                 var appointement = await Appointement(service, car, work.Value);
 
