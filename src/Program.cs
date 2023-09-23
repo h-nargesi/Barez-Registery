@@ -1,11 +1,12 @@
-﻿using Serilog;
-using Photon.Barez;
+﻿using Photon.Barez;
+using Serilog;
 using Serilog.Events;
+using System.Text.RegularExpressions;
 
 try
 {
     var personPath = (args.Length > 0 ? args[0] : null) ?? "person.json";
-    var carPath = (args.Length > 1 ? args[1] : null) ?? "car.json";
+    var configPath = (args.Length > 1 ? args[1] : null) ?? "config.json";
     if (args.Length <= 2 || !int.TryParse(args[2], out var period)) period = 15;
 
     Log.Logger = new LoggerConfiguration()
@@ -14,22 +15,56 @@ try
         .WriteTo.File("events-.log", LogEventLevel.Debug, rollingInterval: RollingInterval.Day)
         .CreateLogger();
 
+    var config = LoadConfig(configPath);
+
     using var service = new HttpRequests();
 
     var person = await RegisterFirstTime(service, personPath);
-    var car = await FindCar(service, carPath);
+    var cars = await FindCar(service, config);
 
     while (true)
     {
-        var center = await CheckingCenters(service, period);
-        await Dates(service, car, center);
+        try
+        {
+            var center = await CheckingCenters(service, config, period);
+            var work = GetWork(center);
 
-        Thread.Sleep(period * 1000);
+            if (work == null) continue;
+
+            foreach (var car in cars)
+            {
+                Log.Logger.Information("CHECK-CAR\t{0}\t{1}", car.Id, car.TypeId);
+
+                var appointement = await Appointement(service, car, work.Value);
+
+                if (appointement == null) continue;
+
+                var product = await Products(service, config, car, work.Value, appointement.Value);
+
+                if (product == null) continue;
+
+                _ = ProductAdd(service, car, center, work.Value, person, appointement.Value, product.Value);
+            }
+        }
+        finally
+        {
+            Thread.Sleep(period * 1000);
+        }
     }
 }
 catch (Exception ex)
 {
     Log.Logger.Error(ex, "Error");
+}
+
+static Config LoadConfig(string configPath)
+{
+    var config = JsonHandler.LoadFromFile<Config>(configPath);
+
+    Log.Logger.Information("LOAD-CONFIG\tc={0}\tp={1}", config.CarName, config.ProductName);
+    Log.Logger.Debug("LOAD-CONFIG={0}", config.SerializeJson());
+
+    return config;
 }
 
 static async Task<Person> RegisterFirstTime(HttpRequests service, string path)
@@ -52,33 +87,34 @@ static async Task<Person> RegisterFirstTime(HttpRequests service, string path)
     Log.Logger.Information("AUTH-PERSON\t{0}\t{1}", person.Mobile, "AUTH");
     Log.Logger.Debug("AUTH-PERSON={0}", person.SerializeJson());
 
-    person = await service.Add(person);
+    person = await service.CustomerAdd(person);
     Log.Logger.Information("ADD-PERSON\t{0}\t{1}", person.Mobile, person.Id);
     Log.Logger.Debug("ADD-PERSON={0}", person.SerializeJson());
 
     return person;
 }
 
-static async Task<Car> FindCar(HttpRequests service, string path)
+static async Task<Car[]> FindCar(HttpRequests service, Config config)
 {
-    var car = JsonHandler.LoadFromFile<Car>(path);
-    Log.Logger.Information("LOAD-ALLCARS\t{0}\t{1}", car.Id, car.TypeId);
-    Log.Logger.Debug("LOAD-CAR={0}", car.SerializeJson());
-
     var cars = await service.Cars();
-    car = cars.Where(c => (string.IsNullOrWhiteSpace(car.Car_name) || c.Car_name.Contains(car.Car_name)) &&
-                          (car.TypeId == 0 || c.TypeId == car.TypeId))
-               .Select(c => (Car?)c)
-               .FirstOrDefault()
-               ?? throw new Exception("Car not found!");
 
-    Log.Logger.Information("CHECK-CAR\t{0}\t{1}", car.Id, car.TypeId);
-    Log.Logger.Debug("CHECK-CAR={0}", car.SerializeJson());
+    var regex = string.IsNullOrWhiteSpace(config.CarName) ? null : new Regex(config.CarName);
 
-    return car;
+    cars = cars.Where(c => regex == null || regex.IsMatch(c.Car_name))
+               .ToArray();
+
+    if (!cars.Any())
+    {
+        throw new Exception("Car not found!");
+    }
+
+    Log.Logger.Information("CHECK-CAR\tx{0}", cars.Length);
+    Log.Logger.Debug("CHECK-CAR={0}", cars.SerializeJson());
+
+    return cars;
 }
 
-static async Task<Center> CheckingCenters(HttpRequests service, int period)
+static async Task<Center> CheckingCenters(HttpRequests service, Config config, int period)
 {
     var waiting_time = period;
     while (true)
@@ -86,17 +122,24 @@ static async Task<Center> CheckingCenters(HttpRequests service, int period)
         try
         {
             var centers = await service.AllCenters();
-            Log.Logger.Information("ALL-CENTERS\t{0}", centers?.Length ?? 0);
+            Log.Logger.Information("ALL-CENTERS\tx{0}", centers?.Length ?? 0);
             Log.Logger.Debug("ALL-CENTERS={0}", centers?.SerializeJson());
 
             if (centers?.Length > 0)
             {
-                var tehran = centers.Where(c => c.Ce_name.Contains("تهران"))
-                                    .Select(c => (Center?)c)
-                                    .FirstOrDefault();
-                if (tehran.HasValue)
+                var regex = string.IsNullOrWhiteSpace(config.CityName) ? null : new Regex(config.CityName);
+
+                var city = centers.Where(c => regex == null || regex.IsMatch(c.Ce_name))
+                                  .Select(c => (Center?)c)
+                                  .FirstOrDefault();
+
+                if (city.HasValue)
                 {
-                    return tehran.Value;
+                    var result = city.Value;
+
+                    Log.Logger.Information("CHECK-CENTER\tW:{0}\tD:{1}", result.Work_centers?.Length, result.Dates?.Length);
+
+                    return result;
                 }
             }
 
@@ -111,30 +154,58 @@ static async Task<Center> CheckingCenters(HttpRequests service, int period)
     }
 }
 
-static async Task Dates(HttpRequests service, Car car, Center center)
+static WorkCenter? GetWork(Center center)
 {
-    Log.Logger.Information("CHECK-CENTER\tW:{0}\tD:{0}", center.Work_centers?.Length, center.Dates?.Length);
-
     if (center.Work_centers == null || center.Work_centers.Length == 0)
     {
-        return;
+        return null;
     }
 
-    if (center.Dates == null || center.Dates.Length == 0)
+    var result = center.Work_centers.Last();
+
+    Log.Logger.Information("CHECK-CENTER\t{0}\t{1}", result.Reserved, result.Wc_date);
+
+    return result;
+}
+
+static async Task<Appointement?> Appointement(HttpRequests service, Car car, WorkCenter work)
+{
+    var appointements = await service.ReserveDates(work.Wc_date, work.Id, car.Id);
+
+    Log.Logger.Information("CHECK-DATES\tx{0}", appointements?.Length ?? 0);
+    Log.Logger.Debug("CHECK-DATES={0}", appointements?.SerializeJson());
+
+    var result = appointements?.Select(x => (Appointement?)x).LastOrDefault();
+
+    Log.Logger.Information("SELECT-DATES\t{0}-{1}", result?.StartAt, result?.EndAt);
+
+    return result;
+}
+
+static async Task<Product?> Products(HttpRequests service, Config config, Car car, WorkCenter work, Appointement appointement)
+{
+    var products = await service.Products(work.Wc_date, work.Id, car.Id, appointement.StartAt);
+
+    var regex = string.IsNullOrWhiteSpace(config.ProductName) ? null : new Regex(config.ProductName);
+
+    Log.Logger.Information("FETCH-PRODUCTS\tx{0}", products?.Length);
+    Log.Logger.Debug("FETCH-PRODUCTS={0}", products?.SerializeJson());
+
+    var result = products?.Where(x => regex == null || regex.IsMatch(x.Name))
+                          .Select(x => (Product?)x)
+                          .FirstOrDefault();
+
+    if (result.HasValue)
     {
-        return;
+        Log.Logger.Information("SELECT-PRODUCT\t{0}", result.Value.Name);
+        Log.Logger.Debug("SELECT-PRODUCT={0}", result.Value.SerializeJson());
     }
 
-    var work = center.Work_centers.First();
-    var date = center.Dates.First();
+    return result;
+}
 
-    var appointement = await service.ReserveDates(date._en, work.Id, car.Id);
-
-    Log.Logger.Information("CHECK-DATES\tW:{0}\tD:{0}", appointement);
-    //Log.Logger.Debug("CHECK-DATES={0}", appointement);
-
-    appointement = await service.ReserveDates(work.Wc_date, work.Id, car.Id);
-
-    Log.Logger.Information("CHECK-DATES\tW:{0}\tD:{0}", appointement);
-    //Log.Logger.Debug("CHECK-DATES={0}", appointement);
+static async Task ProductAdd(HttpRequests service, Car car, Center center, WorkCenter work, Person person, Appointement appointement, Product product)
+{
+    var result = await service.ProductAdd(car, center, work, person, appointement, product);
+    Log.Logger.Information("BUY-PRODUCT\t{0}", result);
 }

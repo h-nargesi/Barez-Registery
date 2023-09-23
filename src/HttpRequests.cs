@@ -59,7 +59,7 @@ class HttpRequests : IDisposable
         return result.Customer;
     }
 
-    public async Task<Person> Add(Person person)
+    public async Task<Person> CustomerAdd(Person person)
     {
         var data = new
         {
@@ -108,15 +108,54 @@ class HttpRequests : IDisposable
         return result.Data;
     }
 
-    public async Task<string> ReserveDates(string wc_date, int workId, int carId)
+    public async Task<Appointement[]> ReserveDates(string wc_date, int workId, int carId)
     {
         using var response = await service.GetAsync($"reserve/dates?wc_date={wc_date}&workId={workId}&carId={carId}");
         var text = await response.Content.ReadAsStringAsync();
 
-        var result = text.DeserializeJson<Date.Result>();
+        var result = text.DeserializeJson<Appointement.Result>();
         if (!result.Success) HandleError(text);
 
-        return text;
+        return result.Data;
+    }
+
+    public async Task<Product[]> Products(string wc_date, int workId, int carId, string startAt)
+    {
+        using var response = await service.GetAsync($"reserve/products?wc_date={wc_date}&workId={workId}&carId={carId}&startAt={startAt}");
+        var text = await response.Content.ReadAsStringAsync();
+
+        var result = text.DeserializeJson<Product.Result>();
+        if (!result.Success) HandleError(text);
+
+        return result.Data;
+    }
+
+    public async Task<string> ProductAdd(Car car, Center center, WorkCenter work, Person person, Appointement appointement, Product product)
+    {
+        var data = new
+        {
+            CarId = car.Id.ToString(),
+            CenterId = center.Id.ToString(),
+            CustomerId = person.Id.ToString(),
+            person.IdNumber,
+            ProductId = product.Id.ToString(),
+            ProductPrice = product.Price.ToString(),
+            appointement.StartAt,
+            Workcenter_date = work.Wc_date,
+        };
+
+        var content = new StringContent(
+            data.SerializeJson(),
+            Encoding.UTF8,
+            MediaTypeNames.Application.Json);
+
+        using var response = await service.PostAsync("reserve/add", content);
+        var text = await response.Content.ReadAsStringAsync();
+
+        var result = text.DeserializeJson<Product.Ack>();
+        if (!result.Success) HandleError(text);
+
+        return result.Success.ToString();
     }
 
     public void Dispose()
