@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "data": [
+    {
+      "startAt": "10:30",
+      "endAt": "11:30"
+    },
+    {
+      "startAt": "11:30",
+      "endAt": "12:30"
+    }
+  ]
+}

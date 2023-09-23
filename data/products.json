@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": 11,
+      "name": "185/65R15",
+      "image": "uploads/photo_846f75c7a5f9.jpg",
+      "price": 1824232,
+      "barcode": "174",
+      "items": 20
+    },
+    {
+      "id": 14,
+      "name": "205/60R15",
+      "image": "uploads/photo_8c315ba7549e.jpg",
+      "price": 1990631,
+      "barcode": "43",
+      "items": 30
+    }
+  ]
+}
