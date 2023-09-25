@@ -49,7 +49,7 @@ try
         }
         finally
         {
-            Thread.Sleep(period * 1000);
+            Thread.Sleep(1000);
         }
     }
 }
@@ -144,7 +144,7 @@ static async Task<Center> CheckingCenters(HttpRequests service, Config config, i
                 }
             }
 
-            waiting_time = centers?.Length > 0 ? period / 4 : period;
+            waiting_time = centers?.Length > 0 ? 1 : period;
         }
         catch (HttpRequestException ex)
         {
