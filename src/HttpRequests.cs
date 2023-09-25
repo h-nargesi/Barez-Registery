@@ -42,10 +42,17 @@ class HttpRequests : IDisposable
         using var response = await service.PostAsync("reserve/check", content);
         var text = await response.Content.ReadAsStringAsync();
 
-        var result = text.DeserializeJson<Check.Result>();
-        if (!result.Success) HandleError(text);
+        try
+        {
+            var result = text.DeserializeJson<Check.Result>();
+            if (!result.Success) HandleError(text);
 
-        return result.Customer;
+            return result.Customer;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(text, ex);
+        }
     }
 
     public async Task<Person> Auth(Check check)
@@ -53,10 +60,17 @@ class HttpRequests : IDisposable
         using var response = await service.GetAsync($"reserve/auth?code={check.Code}&id={check.IdNumber}");
         var text = await response.Content.ReadAsStringAsync();
 
-        var result = text.DeserializeJson<Person.Result>();
-        if (!result.Success) HandleError(text);
+        try
+        {
+            var result = text.DeserializeJson<Person.Result>();
+            if (!result.Success) HandleError(text);
 
-        return result.Customer;
+            return result.Customer;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(text, ex);
+        }
     }
 
     public async Task<Person> CustomerAdd(Person person)
@@ -80,10 +94,17 @@ class HttpRequests : IDisposable
         using var response = await service.PostAsync("reserve/customer/add", content);
         var text = await response.Content.ReadAsStringAsync();
 
-        var result = text.DeserializeJson<Person.Ack>();
-        if (!result.Success) HandleError(text);
+        try
+        {
+            var result = text.DeserializeJson<Person.Ack>();
+            if (!result.Success) HandleError(text);
 
-        return result.Data;
+            return result.Data;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(text, ex);
+        }
     }
 
     public async Task<Center[]> AllCenters()
@@ -91,10 +112,17 @@ class HttpRequests : IDisposable
         using var response = await service.GetAsync("reserve/centers/all");
         var text = await response.Content.ReadAsStringAsync();
 
-        var result = text.DeserializeJson<Center.Result>();
-        if (!result.Success) HandleError(text);
+        try
+        {
+            var result = text.DeserializeJson<Center.Result>();
+            if (!result.Success) HandleError(text);
 
-        return result.Data;
+            return result.Data;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(text, ex);
+        }
     }
 
     public async Task<Car[]> Cars()
@@ -102,10 +130,17 @@ class HttpRequests : IDisposable
         using var response = await service.GetAsync("allcars");
         var text = await response.Content.ReadAsStringAsync();
 
-        var result = text.DeserializeJson<Car.Result>();
-        if (!result.Success) HandleError(text);
+        try
+        {
+            var result = text.DeserializeJson<Car.Result>();
+            if (!result.Success) HandleError(text);
 
-        return result.Data;
+            return result.Data;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(text, ex);
+        }
     }
 
     public async Task<Appointement[]> ReserveDates(string wc_date, int workId, int carId)
@@ -113,10 +148,17 @@ class HttpRequests : IDisposable
         using var response = await service.GetAsync($"reserve/dates?wc_date={wc_date}&workId={workId}&carId={carId}");
         var text = await response.Content.ReadAsStringAsync();
 
-        var result = text.DeserializeJson<Appointement.Result>();
-        if (!result.Success) HandleError(text);
+        try
+        {
+            var result = text.DeserializeJson<Appointement.Result>();
+            if (!result.Success) HandleError(text);
 
-        return result.Data;
+            return result.Data;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(text, ex);
+        }
     }
 
     public async Task<Product[]> Products(string wc_date, int workId, int carId, string startAt)
@@ -124,10 +166,17 @@ class HttpRequests : IDisposable
         using var response = await service.GetAsync($"reserve/products?wc_date={wc_date}&workId={workId}&carId={carId}&startAt={startAt}");
         var text = await response.Content.ReadAsStringAsync();
 
-        var result = text.DeserializeJson<Product.Result>();
-        if (!result.Success) HandleError(text);
+        try
+        {
+            var result = text.DeserializeJson<Product.Result>();
+            if (!result.Success) HandleError(text);
 
-        return result.Data;
+            return result.Data;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(text, ex);
+        }
     }
 
     public async Task<string> ProductAdd(Car car, Center center, WorkCenter work, Person person, Appointement appointement, Product product)
